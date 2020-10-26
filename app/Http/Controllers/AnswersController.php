@@ -29,7 +29,7 @@ class AnswersController extends Controller
      * @param  \App\Answer  $answer
      * @return \Illuminate\Http\Response
      */
-    public function edit(Answer $answer)
+    public function edit(Question $question, Answer $answer)
     {
         $this->authorize('update', $answer);
 
@@ -43,7 +43,7 @@ class AnswersController extends Controller
      * @param  \App\Answer  $answer
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Answer $answer)
+    public function update(Request $request, Question $question, Answer $answer)
     {
         $this->authorize('update', $answer);
 
