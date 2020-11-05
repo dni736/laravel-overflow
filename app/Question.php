@@ -18,7 +18,7 @@ class Question extends Model
     public function setTitleAttribute($value)
     {
         $this->attributes['title'] = $value;
-        $this->attributes['slug'] = str_slug($value);
+        $this->attributes['slug'] = Str::slug($value);
     }
 
     public function getUrlAttribute()
@@ -49,7 +49,7 @@ class Question extends Model
 
     public function answers()
     {
-        return $this->hasMany(Answer::class);
+        return $this->hasMany(Answer::class)->orderBy('votes_count', 'DESC');
         // $question->answers->count()
         // foreach ($question->answers as $answer)
     }
