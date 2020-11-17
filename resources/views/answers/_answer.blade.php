@@ -1,15 +1,14 @@
-<answer :answer="{{$answer}}" inline-template>
+<answer :answer="{{ $answer }}" inline-template>
     <div class="media post">
-        @include('shared._vote', [
-            'model' => $answer
-        ])
+        <vote :model="{{ $answer }}" name="answer"></vote>
+        
         <div class="media-body">
             <form v-if="editing" @submit.prevent="update">
                 <div class="form-group">
-                    <textarea class="form-control" v-model="body" rows="10" required></textarea>
+                    <textarea rows="10" v-model="body" class="form-control" required></textarea>
                 </div>
-                <button class="btn btn-primary" :disabled="isInvalid" type="submit">Update</button>
-                <button class="btn btn-outline-secondary" type="submit" @click="cancel">Cancel</button>
+                <button class="btn btn-primary" :disabled="isInvalid">Update</button>
+                <button class="btn btn-outline-secondary" @click="cancel" type="button">Cancel</button>
             </form>
             <div v-else>
                 <div v-html="bodyHtml"></div>
@@ -20,16 +19,16 @@
                                 <a @click.prevent="edit" class="btn btn-sm btn-outline-info">Edit</a>
                             @endcan
                             @can ('delete', $answer)
-                                <button @click="destroy" class="btn btn-sm btn-outline-danger">Delete</button>
+                                <button @click="destroy" class="btn btn-sm btn-outline-danger">Delete</button>                                
                             @endcan
                         </div>
                     </div>
                     <div class="col-4"></div>
                     <div class="col-4">
-                    <user-info :model="{{$answer}}" label="Answered"></user-info>
+                        <user-info :model="{{ $answer }}" label="Answered"></user-info>
                     </div>
-                </div>
-            </div>                            
+                </div>     
+            </div>                           
         </div>
     </div>
 </answer>
