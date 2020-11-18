@@ -13,7 +13,10 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::post('/token', 'Auth\LoginController@getToken');
+Route::post('/login', 'Api\Auth\LoginController@store');
+Route::delete('/logout', 'Api\Auth\LoginController@destroy')->middleware('auth:api');
+Route::post('/register','Api\Auth\RegisterController');
+
 Route::get('/questions', 'Api\QuestionsController@index');
 Route::get('/questions/{question}/answers', 'Api\AnswersController@index');
 Route::get('/questions/{question}-{slug}', 'Api\QuestionDetailsController');
@@ -27,6 +30,7 @@ Route::middleware(['auth:api'])->group(function() {
     Route::post('/questions/{question}/favorites', 'Api\FavoritesController@store');
     Route::delete('/questions/{question}/favorites', 'Api\FavoritesController@destroy');
     Route::get('/my-posts', 'Api\MyPostsController');
+    Route::post('/login', 'Api\Auth\LoginController@store');
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
