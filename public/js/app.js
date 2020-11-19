@@ -11635,6 +11635,7 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Answer_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Answer.vue */ "./resources/js/components/Answer.vue");
 /* harmony import */ var _NewAnswer_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./NewAnswer.vue */ "./resources/js/components/NewAnswer.vue");
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../event-bus */ "./resources/js/event-bus.js");
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -11673,6 +11674,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   props: ['question'],
   data: function data() {
@@ -11680,7 +11682,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       questionId: this.question.id,
       count: this.question.answers_count,
       answers: [],
-      nextUrl: null
+      answerIds: [],
+      nextUrl: null,
+      excludeAnswers: []
     };
   },
   created: function created() {
@@ -11688,12 +11692,21 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   },
   methods: {
     add: function add(answer) {
+      this.excludeAnswers.push(answer);
       this.answers.push(answer);
       this.count++;
+
+      if (this.count === 1) {
+        _event_bus__WEBPACK_IMPORTED_MODULE_2__["default"].$emit('answers-count-changed', this.count);
+      }
     },
     remove: function remove(index) {
       this.answers.splice(index, 1);
       this.count--;
+
+      if (this.count === 0) {
+        _event_bus__WEBPACK_IMPORTED_MODULE_2__["default"].$emit('answers-count-changed', this.count);
+      }
     },
     fetch: function fetch(endpoint) {
       var _this = this;
@@ -11705,13 +11718,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
         (_this$answers = _this.answers).push.apply(_this$answers, _toConsumableArray(data.data));
 
-        _this.nextUrl = data.next_page_url;
+        _this.nextUrl = data.links.next;
       });
     }
   },
   computed: {
     title: function title() {
       return this.count + " " + (this.count > 1 ? 'Answers' : 'Answer');
+    },
+    theNextUrl: function theNextUrl() {
+      if (this.nextUrl && this.excludeAnswers.length) {
+        return this.nextUrl + this.excludeAnswers.map(function (a) {
+          return '&excludes[]=' + a.id;
+        }).join('');
+      }
+
+      return this.nextUrl;
     }
   },
   components: {
@@ -11933,6 +11955,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Vote_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Vote.vue */ "./resources/js/components/Vote.vue");
 /* harmony import */ var _UserInfo_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./UserInfo.vue */ "./resources/js/components/UserInfo.vue");
 /* harmony import */ var _mixins_modification__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../mixins/modification */ "./resources/js/mixins/modification.js");
+/* harmony import */ var _event_bus__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../event-bus */ "./resources/js/event-bus.js");
 //
 //
 //
@@ -11991,10 +12014,18 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  mounted: function mounted() {
+    var _this = this;
+
+    _event_bus__WEBPACK_IMPORTED_MODULE_3__["default"].$on('answers-count-changed', function (count) {
+      _this.question.answers_count = count;
+    });
+  },
   props: ['question'],
   mixins: [_mixins_modification__WEBPACK_IMPORTED_MODULE_2__["default"]],
   components: {
@@ -12036,18 +12067,19 @@ __webpack_require__.r(__webpack_exports__);
       };
     },
     "delete": function _delete() {
-      var _this = this;
+      var _this2 = this;
 
       axios["delete"](this.endpoint).then(function (_ref) {
         var data = _ref.data;
 
-        _this.$toast.success(data.message, "Success", {
+        _this2.$toast.success(data.message, "Success", {
           timeout: 2000
         });
+
+        _this2.$router.push({
+          name: 'questions'
+        });
       });
-      setTimeout(function () {
-        window.location.href = "/questions";
-      }, 3000);
     }
   }
 });
@@ -12063,7 +12095,9 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _mixins_destroy__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../mixins/destroy */ "./resources/js/mixins/destroy.js");
+/* harmony import */ var _mixins_destroy__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../mixins/destroy */ "./resources/js/mixins/destroy.js");
+//
+//
 //
 //
 //
@@ -12107,7 +12141,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-  mixins: [_mixins_destroy__WEBPACK_IMPORTED_MODULE_1__["default"]],
+  mixins: [_mixins_destroy__WEBPACK_IMPORTED_MODULE_0__["default"]],
   props: ['question'],
   methods: {
     str_plural: function str_plural(str, count) {
@@ -12580,7 +12614,27 @@ __webpack_require__.r(__webpack_exports__);
     Question: _components_Question_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
     Answers: _components_Answers_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
-  props: ['question']
+  props: ['slug'],
+  data: function data() {
+    return {
+      question: {}
+    };
+  },
+  mounted: function mounted() {
+    this.fetchQuestion();
+  },
+  methods: {
+    fetchQuestion: function fetchQuestion() {
+      var _this = this;
+
+      axios.get("/questions/".concat(this.slug)).then(function (_ref) {
+        var data = _ref.data;
+        _this.question = data.data;
+      })["catch"](function (error) {
+        return console.log(error);
+      });
+    }
+  }
 });
 
 /***/ }),
@@ -49111,7 +49165,7 @@ var render = function() {
                       })
                     }),
                     _vm._v(" "),
-                    _vm.nextUrl
+                    _vm.theNextUrl
                       ? _c("div", { staticClass: "text-center mt-3" }, [
                           _c(
                             "button",
@@ -49120,7 +49174,7 @@ var render = function() {
                               on: {
                                 click: function($event) {
                                   $event.preventDefault()
-                                  return _vm.fetch(_vm.nextUrl)
+                                  return _vm.fetch(_vm.theNextUrl)
                                 }
                               }
                             },
@@ -49450,7 +49504,21 @@ var render = function() {
                 _c("div", { staticClass: "d-flex align-items-center" }, [
                   _c("h1", [_vm._v(_vm._s(_vm.title))]),
                   _vm._v(" "),
-                  _vm._m(0)
+                  _c(
+                    "div",
+                    { staticClass: "ml-auto" },
+                    [
+                      _c(
+                        "router-link",
+                        {
+                          staticClass: "btn btn-outline-secondary",
+                          attrs: { exact: "", to: { name: "questions" } }
+                        },
+                        [_vm._v("Back to all Questions")]
+                      )
+                    ],
+                    1
+                  )
                 ])
               ]),
               _vm._v(" "),
@@ -49523,23 +49591,7 @@ var render = function() {
     ])
   ])
 }
-var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "ml-auto" }, [
-      _c(
-        "a",
-        {
-          staticClass: "btn btn-outline-secondary",
-          attrs: { href: "/questions" }
-        },
-        [_vm._v("Back to all Questions")]
-      )
-    ])
-  }
-]
+var staticRenderFns = []
 render._withStripped = true
 
 
@@ -49596,11 +49648,25 @@ var render = function() {
     _vm._v(" "),
     _c("div", { staticClass: "media-body" }, [
       _c("div", { staticClass: "d-flex align-items-center" }, [
-        _c("h3", { staticClass: "mt-0" }, [
-          _c("a", { attrs: { href: "#" } }, [
-            _vm._v(_vm._s(_vm.question.title))
-          ])
-        ]),
+        _c(
+          "h3",
+          { staticClass: "mt-0" },
+          [
+            _c(
+              "router-link",
+              {
+                attrs: {
+                  to: {
+                    name: "questions.show",
+                    params: { slug: _vm.question.slug }
+                  }
+                }
+              },
+              [_vm._v(_vm._s(_vm.question.title))]
+            )
+          ],
+          1
+        ),
         _vm._v(" "),
         _c(
           "div",
@@ -50146,16 +50212,18 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "container" },
-    [
-      _c("question", { attrs: { question: _vm.question } }),
-      _vm._v(" "),
-      _c("answers", { attrs: { question: _vm.question } })
-    ],
-    1
-  )
+  return _vm.question.id
+    ? _c(
+        "div",
+        { staticClass: "container" },
+        [
+          _c("question", { attrs: { question: _vm.question } }),
+          _vm._v(" "),
+          _c("answers", { attrs: { question: _vm.question } })
+        ],
+        1
+      )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -65568,7 +65636,7 @@ __webpack_require__.r(__webpack_exports__);
     return user.id === model.user.id;
   },
   accept: function accept(user, answer) {
-    return user.id === answer.question.user.id;
+    return user.id === answer.question_user_id;
   },
   deleteQuestion: function deleteQuestion(user, question) {
     return user.id === question.user.id && question.answers_count < 1;
@@ -67059,7 +67127,8 @@ var routes = [{
 }, {
   path: '/questions/:slug',
   component: _pages_QuestionPage_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-  name: 'questions.show'
+  name: 'questions.show',
+  props: true
 }, {
   path: '*',
   component: _pages_NotFoundPage_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
