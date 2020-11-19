@@ -43,19 +43,22 @@
 
 <script>
 import destroy from '../mixins/destroy'
+import eventBus from '../event-bus'
 
 export default {
     mixins: [destroy],
     props: ['question'],
     methods: {
         str_plural (str, count) {
-            return str + (count > 1 ? 's' : '')
+            return str + (count > 1 || count == 0 ? 's' : '')
         },
         delete () {
+            this.$root.disableInterceptor();
             axios.delete(`/questions/${this.question.id}`)
                 .then(res => {
                 this.$toast.success(res.data.message, "Success", { timeout: 2000 });
-                this.$emit('deleted')
+                eventBus.$emit('deleted', this.question.id)
+                this.$root.enableInterceptor();
             });
         }
     },

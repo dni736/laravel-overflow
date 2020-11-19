@@ -1,14 +1,12 @@
 <template>
     <div>
         <div class="card-body">
-            <div v-if="questions.length">
-                <spinner v-if="$root.loading"></spinner>
+            <spinner v-if="$root.loading"></spinner>
             <div v-else-if="questions.length">
-                <question-excerpt @deleted="remove(index)" v-for="(question, index) in questions" :question="question" :key="question.id"></question-excerpt>
+                <question-excerpt v-for="question in questions" :question="question" :key="question.id"></question-excerpt>
             </div>
             <div v-else class="alert alert-warning">
                 <strong>Sorry</strong> There are no questions available.
-            </div>
             </div>
         </div>
         <div class="card-footer">
@@ -20,6 +18,8 @@
 <script>
 import QuestionExcerpt from './QuestionExcerpt.vue'
 import Pagination from './Pagination.vue'
+import eventBus from '../event-bus'
+
 export default {
     components: { 
         QuestionExcerpt,
@@ -33,9 +33,16 @@ export default {
             links: {}
         }
     },
+
     mounted () {
         this.fetchQuestions();
+
+        eventBus.$on('deleted', (id) => {
+            let index = this.questions.findIndex(question => id === question.id)  
+            this.remove(index)
+        })
     },
+
     methods: {
         fetchQuestions () {
             axios.get('/questions', { params: this.$route.query })
@@ -44,12 +51,14 @@ export default {
                      this.links = data.links
                      this.meta = data.meta
                  })
-            },
+        },
+
         remove (index) {
             this.questions.splice(index, 1)
             this.count--
         }
     },
+
     watch: {
         "$route": 'fetchQuestions'
     }
