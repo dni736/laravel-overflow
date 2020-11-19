@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Auth::routes(['verify' => true]);
+Route::view('/{any}', 'spa')->where('any', '.*');
 Route::get('/', 'QuestionsController@index');
-
-Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 #Route::post('/questions/{question}/answers', 'AnswersController@store')->name('answers.store');
