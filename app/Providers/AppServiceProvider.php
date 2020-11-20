@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if (config('app.env')==='production') {
+            \URL::forceScheme('https');
+        }
         \Gate::define('update-question', function($user, $question){
             return $user->id == $question->user_id;
         });
